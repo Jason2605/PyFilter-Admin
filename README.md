@@ -23,7 +23,7 @@ Next we need to download all the python packages needed to run PyFilter-Admin, t
 
 ## Running
 
-Once all the packages are installed you can run PyFilter-Admin with the following command `python runserver.py`
+Once all the packages are installed you can run PyFilter-Admin with the following command `python run_server.py`
 
 The default username is: PyFilter
 The default password is: PyFilter12345
