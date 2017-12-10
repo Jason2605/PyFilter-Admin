@@ -1,0 +1,184 @@
+{% extends 'layout/header.html' %}
+
+{% block body %}
+<div id="modal1" class="modal fade" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="card">
+            <div class="card-content">
+                <center><h3 id="ip"></h3>
+                <h4>Server name</h4>
+                <h4><small id="server"></small></h4>
+                <h4>Time banned</h4>
+                <h4><small id="time"></small></h4>
+                <h4>Ban reason</h4>
+                <h4><small id="reason"></small></h4></center>
+            </div>
+        </div>
+    </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
+<div class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-lg-4 col-md-12 col-sm-12">
+                <div class="card card-stats">
+                    <div class="card-header" data-background-color="red">
+                        <i class="material-icons">error</i>
+                    </div>
+                    <div class="card-content">
+                        <p class="category">Total number of bans</p>
+                        <h3 class="title">
+                            <small>{{ total }}</small>
+                        </h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-12 col-sm-12">
+                <div class="card card-stats">
+                    <div class="card-header" data-background-color="orange">
+                        <i class="material-icons">block</i>
+                    </div>
+                    <div class="card-content">
+                        <p class="category">Latest banned IP</p>
+                        <h3 class="title">
+                            <small>{{ bans[0][0] }} on {{ bans[0][1] }}</small>
+                        </h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-12 col-sm-12">
+                <div class="card card-stats">
+                    <div class="card-header" data-background-color="red">
+                        <i class="material-icons">error</i>
+                    </div>
+                    <div class="card-content">
+                        <p class="category">Amount of banned IP's in the last 10 days</p>
+                        <h3 class="title">
+                            <small>{{ amount }}</small>
+                        </h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% if is_redis %}
+        <div class="row">
+            <div class="col-lg-12 col-md-12 col-sm-12">
+                <div class="card">
+                    <div class="card-header" data-background-color="blue">
+                        <h4 class="title">Add new ban</h4>
+                        <p class="category">Add a new IP ban manually</p>
+                    </div>
+                    <div class="card-content">
+                        <div class="row">
+                            <div class="form-group col-lg-6 col-md-12 col-sm-12 label-floating">
+                                <label class="control-label">IP Address</label>
+                                <input type="text" class="form-control" id="ip-ban">
+                            </div>
+                            <div class="form-group col-lg-6 col-md-12 col-sm-12 label-floating">
+                                <label class="control-label">Reason</label>
+                                <input type="text" class="form-control" id="reason-ban">
+                            </div>
+                            <div class="form-group col-sm-12">
+                                <button data-background-color="blue" class="btn col-lg-12" onclick="ban()">Ban</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        <div class="row">
+            <div class="col-lg-12 col-md-12 col-sm-12">
+                <div class="card">
+                    <div class="card-header" data-background-color="orange">
+                        <h4 class="title">Latest bans</h4>
+                        <p class="category">The 10 latest bans, and which server they were banned on</p>
+                    </div>
+                    <div class="card-content table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <th>IP</th>
+                                <th>Server</th>
+                                <th>More info</th>
+                            </thead>
+                            <tbody>
+                                {% for ban in bans %}
+                                <tr>
+                                    <td>{{ ban[0] }}</td>
+                                    <td>{{ ban[1] }}</td>
+                                    <td>
+                                        <button id="{{ ban[0] }}-{{ ban[1] }}" onclick="info(this.id)" class="btn btn-warning btn-xs">More info</button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block js %}
+<script>
+    function info(id) {
+
+        var splitId = id.split("-"); //temp - being saved into redis
+        var ip = splitId[0];
+        if (splitId.length > 2) {
+            var name = splitId.slice(1);
+            var name = name.join("-")
+        } else {
+            var name = splitId[1];
+        }
+
+        $.post( "/info/", {"ip": ip, "name": name}, function( data ) {
+            $('#modal1').modal('show');
+            $('#ip').text("IP: " + data.ip)
+            $('#server').text(data.server)
+            $('#time').text(data.time_banned)
+            $('#reason').text(data.reason)
+        });
+    }
+
+    function ban() {
+
+        var ip = $("#ip-ban").val();
+        var reason = $("#reason-ban").val();
+
+        $.post( "/ban/add/", {"ip": ip, "reason": reason}, function( data ) {
+            if (data.status == 200) {
+                $.notify({
+                    // options
+                    message: data.message
+                },{
+                    // settings
+                    type: 'success'
+                });
+
+                $('table > tbody > tr:first').before(' \
+                <tr> \
+                    <td>' + ip + '</td> \
+                    <td>PyFilter-Admin manual ban</td> \
+                    <td> \
+                        <button id="' + ip + '-PyFilter-Admin manual ban" onclick="info(this.id)" class="btn btn-warning btn-xs">More info</button> \
+                    </td> \
+                </tr>'
+                );
+
+            } else {
+                $.notify({
+                    // options
+                    message: data.error
+                },{
+                    // settings
+                    type: 'danger'
+                });
+            }
+        });
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,15 @@
+{
+  "settings": {
+    "debug": false,
+    "database": "redis",
+    "ignored_ips": ["127.0.0.1"]
+  },
+  "redis": {
+    "host": "",
+    "password": "",
+    "database": 0
+  },
+  "sqlite": {
+    "database": "PyFilter.db"
+  }
+}

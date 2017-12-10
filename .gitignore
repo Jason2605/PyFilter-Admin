@@ -1,0 +1,16 @@
+
+\.DS_Store
+
+\.idea/
+
+PyFilter\.db
+
+*.pyc
+
+uwsgi\.ini
+
+config\.json
+
+PyFilter-Admin\.db
+
+key\.txt
