@@ -49,8 +49,6 @@ header_array = [
     ["/logout/", "Logout", "input"]
 ]
 
-ip_regex = re.compile(r"(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})")
-
 time = 30 if settings["debug"] else 10
 
 app = Flask(__name__)

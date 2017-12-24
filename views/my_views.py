@@ -1,9 +1,10 @@
 from flask import render_template, jsonify, request, session, redirect, url_for
-from pyfilter_admin import app, header_array, database, ip_regex, login_db, settings
+from pyfilter_admin import app, header_array, database, login_db, settings
 from datetime import datetime, timedelta
 from passlib.hash import bcrypt
 from functools import wraps
 import time
+import socket
 
 
 def login_required(f):
@@ -82,10 +83,13 @@ def change_password():
 def home():
     is_redis = database[0] == "redis"
     if is_redis:
-        bans = [x.split() for x in database[1].lrange("latest_10_keys", 0, 9)]
+        bans = []
+        for x in database[1].lrange("latest_10_keys", 0, 9):
+            ban = x.split()
+            if len(ban) != 2:
+                ban[1] = " ".join(ban[1:])
+            bans.append(ban[:2])
         amount, total_bans = scan(database[1])
-        # amount = 6
-        # total = 61
     else:
         sql = "SELECT ip, server_name, time_banned FROM banned_ip" \
               " WHERE time_banned > {} ORDER BY id DESC".format(time.time() - 864000)
@@ -139,7 +143,7 @@ def add_ban():
     if not (ip and reason):
         return jsonify(status=400, error="Please input both a reason and an IP address!")
 
-    if not ip_regex.match(ip):
+    if not check_ip(ip):
         return jsonify(status=400, error="Please enter a valid IP address!")
 
     if ip in settings["ignored_ips"]:
@@ -149,7 +153,7 @@ def add_ban():
         return jsonify(status=400, error="IP address already banned!")
 
     time_banned = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    name = "PyFilter-Admin"
+    name = "PyFilter-Admin manual ban"
 
     database[1].lpush("latest_10_keys", "{} {}".format(ip, name))
     database[1].ltrim("latest_10_keys", 0, 9)
@@ -164,6 +168,16 @@ def add_ban():
 
 
 def scan(redis_connection):
+    """
+    Scan redis for IPs and check if IPs are more than 10 days old
+
+    Args:
+        redis_connection: The object which is connected to redis
+
+    Returns:
+        A tuple of amount of IPs banned in the last 10 days, and the total amount of bans
+    """
+
     amount = 0
     total = 0
     time_now = datetime.now()
@@ -185,10 +199,31 @@ def scan(redis_connection):
         except ValueError:
             continue
 
-        if time_banned - time_now >= timedelta(days=10):
-            print(time_banned - time_now)
+        if time_now - time_banned >= timedelta(days=10):
+            print(time_now - time_banned)
             continue
 
         amount += 1
 
     return amount, total
+
+
+def check_ip(ip, last=False):
+    """
+    Checks to see if the given IP is v4 or v6
+
+    Args:
+        ip: The ip string to be checked
+        last: A base case to stop recursion
+
+    Returns:
+        If IP is matched as either v4 or v6 a string is returned, else False
+    """
+    ip_type = (socket.AF_INET, "v4") if not last else (socket.AF_INET6, "v6")
+    try:
+        socket.inet_pton(ip_type[0], ip)
+        return ip_type[1]
+    except OSError:
+        if last:
+            return False
+        return check_ip(ip, True)
