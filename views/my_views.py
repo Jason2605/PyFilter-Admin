@@ -183,7 +183,7 @@ def scan(redis_connection):
     time_now = datetime.now()
 
     for result in redis_connection.scan_iter():
-        if redis_connection.type(result) != "hash":
+        if not check_ip(result):
             continue
 
         total += 1
@@ -200,7 +200,6 @@ def scan(redis_connection):
             continue
 
         if time_now - time_banned >= timedelta(days=10):
-            print(time_now - time_banned)
             continue
 
         amount += 1
