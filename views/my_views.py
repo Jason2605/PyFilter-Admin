@@ -82,6 +82,8 @@ def change_password():
 @login_required
 def home():
     is_redis = database[0] == "redis"
+    countries = []
+    values = []
     if is_redis:
         bans = []
         for x in database[1].lrange("latest_10_keys", 0, 9):
@@ -89,7 +91,18 @@ def home():
             if len(ban) != 2:
                 ban[1] = " ".join(ban[1:])
             bans.append(ban[:2])
-        amount, total_bans = scan(database[1])
+        amount, total_bans, country_data = scan(database[1])
+
+        country_data = sorted(country_data.items(), key=lambda x: x[1], reverse=True)
+        countries, values = map(list, zip(*country_data))
+
+        if len(values) > 9:
+            countries = countries[:9]
+            countries.append("Other")
+            other_amount = sum(values[9:])
+            values = values[:9]
+            values.append(other_amount)
+
     else:
         sql = "SELECT ip, server_name, time_banned FROM banned_ip" \
               " WHERE time_banned > {} ORDER BY id DESC".format(time.time() - 864000)
@@ -109,7 +122,9 @@ def home():
                            bans=bans,
                            amount=amount,
                            total=total_bans,
-                           is_redis=is_redis)
+                           is_redis=is_redis,
+                           countries=countries,
+                           values=values)
 
 
 @app.route("/info/", methods=["POST"])
@@ -180,7 +195,10 @@ def scan(redis_connection):
 
     amount = 0
     total = 0
+    countries = {}
     time_now = datetime.now()
+
+    now = time.time()
 
     for result in redis_connection.scan_iter():
         if not check_ip(result):
@@ -188,8 +206,21 @@ def scan(redis_connection):
 
         total += 1
 
-        server = redis_connection.hget(result, "banned_server")
-        time_banned = redis_connection.hget(result, server)
+        ip_data = redis_connection.hgetall(result)
+
+        server = ip_data["banned_server"]
+        time_banned = ip_data[server]
+
+        if "country" in ip_data:
+            country = ip_data["country"]
+
+            if country in countries:
+                countries[country] += 1
+            else:
+                countries[country] = 1
+
+        # server = redis_connection.hget(result, "banned_server")
+        # time_banned = redis_connection.hget(result, server)
 
         if time_banned is None:
             continue
@@ -204,7 +235,7 @@ def scan(redis_connection):
 
         amount += 1
 
-    return amount, total
+    return amount, total, countries
 
 
 def check_ip(ip, last=False):
