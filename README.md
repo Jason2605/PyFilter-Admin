@@ -44,8 +44,12 @@ The default password is: PyFilter12345
   <a href="https://pyfilter.co.uk"><img src="https://pyfilter.co.uk/static/images/PyFilter-Admin-1.png"/></a>
 </p>
 
-Note: Redis only for manual ban addition.
+Note: Redis only for manual ban addition and chart information.
 
 <p align="center">
   <a href="https://pyfilter.co.uk"><img src="https://pyfilter.co.uk/static/images/PyFilter-Admin-Redis.png"/></a>
+</p>
+
+<p align="center">
+  <a href="https://pyfilter.co.uk"><img src="https://pyfilter.co.uk/static/images/PyFilter-Chart.png"/></a>
 </p>
