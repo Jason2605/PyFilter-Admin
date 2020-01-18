@@ -84,6 +84,7 @@ def home():
     is_redis = database[0] == "redis"
     countries = []
     values = []
+    country_amount = settings["country_amount"] - 1
     if is_redis:
         bans = []
         for x in database[1].lrange("latest_10_keys", 0, 9):
@@ -94,14 +95,16 @@ def home():
         amount, total_bans, country_data = scan(database[1])
 
         country_data = sorted(country_data.items(), key=lambda x: x[1], reverse=True)
-        countries, values = map(list, zip(*country_data))
 
-        if len(values) > 9:
-            countries = countries[:9]
-            countries.append("Other")
-            other_amount = sum(values[9:])
-            values = values[:9]
-            values.append(other_amount)
+        if country_data:
+            countries, values = map(list, zip(*country_data))
+
+            if len(values) > country_amount:
+                countries = countries[:country_amount]
+                countries.append("Other")
+                other_amount = sum(values[country_amount:])
+                values = values[:country_amount]
+                values.append(other_amount)
 
     else:
         sql = "SELECT ip, server_name, time_banned FROM banned_ip" \
@@ -113,6 +116,20 @@ def home():
         sql_amount = "SELECT COUNT(id) FROM banned_ip"
         cur.execute(sql_amount)
         total_bans = cur.fetchone()[0]
+
+        sql_amount_countries = "SELECT COUNT(id) as c, country FROM banned_ip GROUP BY country ORDER BY c DESC"
+        cur.execute(sql_amount_countries)
+        country_data = cur.fetchall()
+
+        if country_data:
+            values, countries = map(list, zip(*country_data))
+
+            if len(values) > country_amount:
+                countries = countries[:country_amount]
+                countries.append("Other")
+                other_amount = sum(values[country_amount:])
+                values = values[:country_amount]
+                values.append(other_amount)
 
         bans = bans_last_10[-10:]
         amount = len(bans_last_10)

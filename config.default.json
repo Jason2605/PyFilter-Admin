@@ -2,7 +2,8 @@
   "settings": {
     "debug": false,
     "database": "redis",
-    "ignored_ips": ["127.0.0.1"]
+    "ignored_ips": ["127.0.0.1"],
+    "country_amount": 12
   },
   "redis": {
     "host": "",
