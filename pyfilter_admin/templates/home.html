@@ -41,7 +41,11 @@
                     <div class="card-content">
                         <p class="category">Latest banned IP</p>
                         <h3 class="title">
+                            {% if bans %}
                             <small>{{ bans[0][0] }} on {{ bans[0][1] }}</small>
+                            {% else %}
+                            <small>There have been no bans</small>
+                            {% endif %}
                         </h3>
                     </div>
                 </div>
@@ -60,13 +64,12 @@
                 </div>
             </div>
         </div>
-        {% if is_redis %}
         <div class="row">
             <div class="col-lg-12 col-md-12 col-sm-12">
                 <div class="card">
                     <div class="card-header" data-background-color="blue">
                         <h4 class="title">Amount of banned IPs per country</h4>
-                        <p class="category">Pie chart showing how many IPs have been banned in that country</p>
+                        <p class="category">Bar chart showing how many IPs have been banned in that country</p>
                     </div>
                     <br>
                     <canvas id="myChart"></canvas>
@@ -98,7 +101,6 @@
                 </div>
             </div>
         </div>
-        {% endif %}
         <div class="row">
             <div class="col-lg-12 col-md-12 col-sm-12">
                 <div class="card">
@@ -237,8 +239,7 @@ var myChart = new Chart(ctx, {
         scales: {
             yAxes: [{
                 ticks: {
-                    min: 0,
-                    stepSize: 1
+                    min: 0
                 }
             }]
         }
