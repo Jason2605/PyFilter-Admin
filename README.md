@@ -21,6 +21,30 @@ First we will clone this repo via the following command `git clone https://githu
 
 Next we need to download all the python packages needed to run PyFilter-Admin, this is very simple because all the requirements are within the `requirements.txt` file. To install run `pip install -r requirements.txt`
 
+## Configuration
+
+Once we have cloned the repository, we need to setup the configuration for PyFilter-Admin. This is a painless process. There is an included default config file `config.default.json`, rename this to `config.json`. Inside the configuration file we need to define the backend that our PyFilter processes are using (Sqlite or Redis).
+```json
+{
+  "settings": {
+    "debug": false,
+    "database": "redis",
+    "ignored_ips": ["127.0.0.1"]
+  },
+  "redis": {
+    "host": "",
+    "password": "",
+    "database": 0
+  },
+  "sqlite": {
+    "database": "PyFilter.db"
+  }
+}
+```
+If the backend is redis, it's simply just a case of entering the Redis connection information. If the backend is sqlite, we need to update the database key within settings, and provide the path to the sqlite database in the sqlite section.
+
+`"ignored_ips"` is a whitelist of IP addresses which are unable to be banned via the web interface.
+
 ## Running
 
 Once all the packages are installed you can run PyFilter-Admin with the following command `python run_server.py`
