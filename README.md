@@ -29,7 +29,8 @@ Once we have cloned the repository, we need to setup the configuration for PyFil
   "settings": {
     "debug": false,
     "database": "redis",
-    "ignored_ips": ["127.0.0.1"]
+    "ignored_ips": ["127.0.0.1"],
+    "country_amount": 12
   },
   "redis": {
     "host": "",
@@ -44,6 +45,7 @@ Once we have cloned the repository, we need to setup the configuration for PyFil
 If the backend is redis, it's simply just a case of entering the Redis connection information. If the backend is sqlite, we need to update the database key within settings, and provide the path to the sqlite database in the sqlite section.
 
 `"ignored_ips"` is a whitelist of IP addresses which are unable to be banned via the web interface.
+`"country_amount"` is the amount of countries to show on the bar chart before bundling them into "other".
 
 ## Running
 
